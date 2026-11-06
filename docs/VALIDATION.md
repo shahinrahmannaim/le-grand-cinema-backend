@@ -1,28 +1,49 @@
-# Vérifications du premier incrément
+# Validation exécutée — 6 novembre 2026
 
-Vérifications exécutées le 6 novembre 2026, sur Java 21 et PostgreSQL 17.6.
+## Résultats locaux observés
 
-- `./mvnw -Pdatabase-tests verify` : compilation, Checkstyle, 5 tests unitaires et
-  7 tests d'intégration réussis, aucun échec ni test ignoré.
-- Migrations Flyway appliquées sur une vraie base PostgreSQL ; 10 salles et 1 700 places.
-- Démarrage du JAR : santé UP, catalogue de 3 films fictifs et séances renvoyées par l'API.
-- Couverture JaCoCo de cet incrément : 50 lignes couvertes sur 52, soit 96,15 %.
-  Cette mesure porte sur le petit périmètre actuellement implémenté, pas sur les fonctions restantes.
-- Frontend : 6 tests Vitest réussis et compilation Angular de production réussie.
-  Couverture mesurée par le runner : 80,16 % des lignes instrumentées et 89,18 % des branches.
+| Contrôle | Résultat |
+|---|---|
+| Maven `-Pdatabase-tests clean verify` | Build réussi |
+| JUnit unitaires | 6 tests réussis, 0 échec / erreur / ignoré |
+| Intégration PostgreSQL et HTTP | 23 tests réussis, 0 échec / erreur / ignoré |
+| Checkstyle | 0 violation des règles configurées |
+| Couverture JaCoCo globale des lignes | 92.1 % (478 couvertes / 519) |
+| Couverture JaCoCo des branches | 73.39 % |
+| Angular / Vitest | 27 tests réussis dans 8 fichiers |
+| Couverture frontend globale des lignes TypeScript | 83.15 % (553 / 665) |
+| Couverture frontend des branches | 64.36 % |
+| Proxy de déploiement (Node test) | 3 tests réussis |
+| Prettier | Contrôle réussi |
+| Build Angular production | Réussi ; routes chargées à la demande, budget initial respecté |
+| Contrat OpenAPI 3.0.3 | 26 opérations, validation de structure réussie |
 
-Les tests de base vérifient la capacité initiale, le refus de séances qui se chevauchent et
-le refus d'un siège appartenant à une autre salle. Les tests HTTP contrôlent le catalogue,
-les séances, les dates invalides et les films inexistants. Les tests unitaires contrôlent
-notamment les changements d'heure et le jour local Europe/Paris.
+Les chiffres frontend incluent explicitement `src/app/**/*.ts` et les fichiers non couverts. Ils ne doivent pas être confondus avec une couverture de toutes les branches métier, du CSS ou de tous les navigateurs. JaCoCo couvre le code Java compilé et exercé par les deux suites. Les pourcentages ne sont pas une preuve d’absence de défaut.
 
-Limites de vérification : le navigateur Chromium n'a pas pu démarrer dans l'environnement
-de travail (restriction sur les sockets Unix). La vérification visuelle et les parcours navigateur
-complets restent à réaliser sur la machine de développement et sur le déploiement.
-Docker n'était pas disponible dans cet environnement ; le Dockerfile et Compose sont fournis
-mais leur exécution doit encore être vérifiée. Les tests de base ont utilisé PostgreSQL 17 natif.
+## Invariants vérifiés
 
-Les workflows GitHub sont préparés ; aucune exécution distante, pull request, validation métier
-ou URL de déploiement n'est revendiquée tant que ces opérations n'ont pas réellement eu lieu.
-L'authentification, la réservation transactionnelle et idempotente, les billets et l'administration
-restent à développer et à tester. Les résultats présents ne valident pas ces fonctions futures.
+- 20 acteurs concurrents demandent le même siège : **1 réussite, 19 conflits**, une réservation et une attribution en base.
+- Une demande de plusieurs places dont une déjà prise est annulée en entier : aucune attribution partielle de la demande perdante.
+- Une répétition avec la même clé et les mêmes sièges, même réordonnés, retrouve le même billet ; un contenu différent est refusé.
+- Session persistante JDBC, CSRF obligatoire, renouvellement à la connexion, déconnexion, restriction CLIENT / STAFF / ADMIN.
+- Billet lisible par le propriétaire / personnel, refus 404 pour un autre client.
+- Guichet et Web utilisent le même stock.
+- Flux SSE HTTP réel : événement initial puis notification après confirmation validée ; fermeture des flux dans la recette automatisée.
+- Chevauchements de créneaux et modifications / annulations d’une séance réservée refusés.
+- Occupation avec zéro place puis deux places sur dix ; filtre au seuil exact ; aucune modification automatique du programme.
+- Périodes cohérentes, jour Paris conservé, week-end identifié ; journées de changement d’heure de 23 / 25 heures.
+- Réponse perdue simulée côté frontend : clé et contenu conservés pour la nouvelle tentative. La reproduction contrôlée du défaut est décrite dans BUG-001.
+
+## Conditions de ces tests
+
+Java 21.0.13, Spring Boot 4.1.2, PostgreSQL natif 17.6, Node 24.22.1, Angular 22.2.6. Les commandes Maven de ce runtime utilisent un JDK et des réglages réseau temporaires ; la dernière répétition a utilisé le cache Maven hors ligne. Le PostgreSQL de test est réellement lancé ; il ne s’agit pas d’une base H2 ni d’un mock de transaction. La CI fournie utilise le service PostgreSQL 17 de GitHub Actions.
+
+## Non exécuté ou à confirmer
+
+- Docker et Docker Compose ne sont pas disponibles dans ce runtime : Dockerfile / Compose préparés, mais démarrage conteneur à confirmer sur le poste et l’hébergeur.
+- Le lancement de Chromium est bloqué par la restriction des sockets Unix de l’environnement. Les tests DOM utilisent jsdom ; ils ne constituent pas une recette visuelle. Vérifier 360 px, clavier, impression PDF et navigateurs réels selon ACCEPTANCE.
+- Aucune connexion authentifiée à GitHub / aux hébergeurs n’est disponible ici. Aucun push, numéro de PR, CI distante réussie ni URL publique n’est inventé.
+- Le scénario k6 est fourni mais non exécuté. Les seuils sont des cibles proposées. Aucune disponibilité de festival, audit de sécurité complet ou restauration de sauvegarde n’est démontrée.
+- Les règles métier encore ouvertes et la recette du cinéma nécessitent une validation humaine.
+
+Le fichier `docs/validation/results.json` conserve les compteurs extraits des rapports. Pour reproduire les rapports détaillés, suivre les README. Après publication, compléter ce document avec les liens réels et la recette sur l’environnement public.

@@ -9,6 +9,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.junit.jupiter.api.Test;
+
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -17,7 +19,6 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
-import org.junit.jupiter.api.Test;
 
 class CatalogServiceTest {
     private final CatalogRepository repository = mock(CatalogRepository.class);
@@ -34,12 +35,15 @@ class CatalogServiceTest {
 
     @Test
     void defaultDayUsesParisRatherThanUtc() {
-        when(repository.findPublishedFilm(filmId)).thenReturn(Optional.of(
-                new Film(filmId, "Film", "Résumé", 90, "Drame", null)));
+        when(repository.findPublishedFilm(filmId))
+                .thenReturn(Optional.of(new Film(filmId, "Film", "Résumé", 90, "Drame", null)));
         when(repository.findScreenings(eq(filmId), any(), any())).thenReturn(List.of());
         assertEquals(List.of(), service.screenings(filmId, null));
-        verify(repository).findScreenings(filmId,
-                DateWindow.forDate(LocalDate.of(2026, 11, 7), CatalogService.CINEMA_ZONE), clock.instant());
+        verify(repository)
+                .findScreenings(
+                        filmId,
+                        DateWindow.forDate(LocalDate.of(2026, 11, 7), CatalogService.CINEMA_ZONE),
+                        clock.instant());
     }
 
     @Test

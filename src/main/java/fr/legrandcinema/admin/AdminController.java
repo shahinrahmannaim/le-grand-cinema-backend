@@ -9,8 +9,10 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.sql.Timestamp;
@@ -82,7 +85,7 @@ public class AdminController {
         UUID id = UUID.randomUUID();
         jdbc.update(
                 "INSERT INTO film(id,title,synopsis,duration_minutes,genre,poster_url,published)"
-                    + " VALUES(?,?,?,?,?,?,?)",
+                        + " VALUES(?,?,?,?,?,?,?)",
                 id,
                 input.title().trim(),
                 input.synopsis().trim(),
@@ -109,7 +112,7 @@ public class AdminController {
                         throw new ApiException(
                                 409,
                                 "Film déjà programmé : seul son état de publication peut changer."
-                                    + " Créez une nouvelle fiche pour modifier son contenu.");
+                                        + " Créez une nouvelle fiche pour modifier son contenu.");
                     jdbc.update(
                             "UPDATE film SET"
                                 + " title=?,synopsis=?,duration_minutes=?,genre=?,poster_url=?,published=?"
@@ -122,6 +125,26 @@ public class AdminController {
                             input.published(),
                             id);
                     return Map.of("id", id);
+                });
+    }
+
+    @DeleteMapping("/films/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    void deleteFilm(@PathVariable UUID id) {
+        tx.executeWithoutResult(
+                status -> {
+                    jdbc.queryForObject(
+                            "SELECT id FROM film WHERE id=? FOR UPDATE", UUID.class, id);
+                    Long scheduled =
+                            jdbc.queryForObject(
+                                    "SELECT count(*) FROM screening WHERE film_id=?",
+                                    Long.class,
+                                    id);
+                    if (scheduled != null && scheduled > 0)
+                        throw new ApiException(
+                                409,
+                                "Film déjà programmé : dépubliez-le pour conserver l’historique.");
+                    jdbc.update("DELETE FROM film WHERE id=?", id);
                 });
     }
 
@@ -208,14 +231,14 @@ public class AdminController {
         Long count =
                 jdbc.queryForObject(
                         "SELECT count(*) FROM reservation WHERE screening_id=? AND"
-                            + " status='CONFIRMED'",
+                                + " status='CONFIRMED'",
                         Long.class,
                         id);
         if (count != null && count > 0)
             throw new ApiException(
                     409,
                     "Séance réservée : modification et annulation bloquées pour préserver les"
-                        + " billets.");
+                            + " billets.");
     }
 
     private void validatePoster(String url) {

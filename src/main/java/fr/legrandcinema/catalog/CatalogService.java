@@ -1,12 +1,13 @@
 package fr.legrandcinema.catalog;
 
+import org.springframework.stereotype.Service;
+
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
-import org.springframework.stereotype.Service;
 
 @Service
 public class CatalogService {
@@ -26,6 +27,7 @@ public class CatalogService {
     public List<Screening> screenings(UUID filmId, LocalDate date) {
         repository.findPublishedFilm(filmId).orElseThrow(NoSuchElementException::new);
         LocalDate day = date == null ? LocalDate.now(clock.withZone(CINEMA_ZONE)) : date;
-        return repository.findScreenings(filmId, DateWindow.forDate(day, CINEMA_ZONE), clock.instant());
+        return repository.findScreenings(
+                filmId, DateWindow.forDate(day, CINEMA_ZONE), clock.instant());
     }
 }

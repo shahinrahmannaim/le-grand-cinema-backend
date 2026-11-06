@@ -2,10 +2,11 @@ package fr.legrandcinema.catalog;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import org.junit.jupiter.api.Test;
+
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import org.junit.jupiter.api.Test;
 
 class DateWindowTest {
     private static final ZoneId PARIS = ZoneId.of("Europe/Paris");

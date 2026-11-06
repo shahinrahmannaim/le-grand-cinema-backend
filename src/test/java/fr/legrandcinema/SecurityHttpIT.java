@@ -168,6 +168,11 @@ class SecurityHttpIT {
         var response = write(c, "POST", "/api/admin/films", film, true);
         assertEquals(200, response.statusCode());
         String filmId = json.readTree(response.body()).get("id").asText();
+        var unused = write(c, "POST", "/api/admin/films", film, true);
+        String unusedId = json.readTree(unused.body()).get("id").asText();
+        assertEquals(
+                204,
+                write(c, "DELETE", "/api/admin/films/" + unusedId, Map.of(), true).statusCode());
         assertEquals(200, write(c, "PUT", "/api/admin/films/" + filmId, film, true).statusCode());
         var show =
                 Map.of(
@@ -182,6 +187,8 @@ class SecurityHttpIT {
         response = write(c, "POST", "/api/admin/screenings", show, true);
         assertEquals(200, response.statusCode());
         String showId = json.readTree(response.body()).get("id").asText();
+        assertEquals(
+                409, write(c, "DELETE", "/api/admin/films/" + filmId, Map.of(), true).statusCode());
         assertEquals(409, write(c, "POST", "/api/admin/screenings", show, true).statusCode());
         assertEquals(409, write(c, "PUT", "/api/admin/films/" + filmId, film, true).statusCode());
         JsonNode plan =

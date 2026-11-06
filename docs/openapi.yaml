@@ -1,64 +1,1817 @@
 openapi: 3.0.3
 info:
-  title: Le Grand Cinéma — Catalogue
-  version: 0.1.0
-  description: Public read-only API. Booking and authentication are not implemented in this increment.
+  title: Le Grand Cinéma API
+  version: 1.0.0
+  description: Projet pédagogique. Sessions JDBC ; CSRF sur toutes les écritures,
+    y compris connexion et inscription. Cookie HttpOnly Secure en production. Deux
+    dépôts, proxy de même origine. Prix en centimes EUR. Les listes administration
+    / statistiques conservent les noms de colonnes snake_case ; les DTO client utilisent
+    camelCase.
 servers:
-  - url: http://localhost:8080
+- url: /api
 paths:
-  /api/catalog/films:
+  /catalog/films:
     get:
-      summary: Published films with a future non-cancelled screening
-      operationId: listFilms
+      summary: Films publiés ayant une séance future
+      description: Films publiés ayant une séance future
+      tags:
+      - public
       responses:
         '200':
-          description: Films, sorted by title; an empty list is valid
+          description: Succès
           content:
             application/json:
               schema:
                 type: array
-                items: {$ref: '#/components/schemas/Film'}
-  /api/catalog/films/{filmId}/screenings:
+                items:
+                  $ref: '#/components/schemas/Film'
+        '400':
+          description: Entrée invalide
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Session absente / identifiants incorrects
+        '403':
+          description: Droits insuffisants / CSRF invalide
+        '404':
+          description: Ressource absente ou billet non autorisé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflit de places, d’idempotence, d’e-mail, de programmation
+            ou historique protégé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Limitation des tentatives
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security: []
+  /catalog/films/{filmId}/screenings:
     get:
-      summary: Future non-cancelled screenings on a cinema day in Europe/Paris
-      operationId: listScreenings
+      summary: Séances disponibles du jour Paris
+      description: Séances disponibles du jour Paris
+      tags:
+      - public
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Screening'
+        '400':
+          description: Entrée invalide
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Session absente / identifiants incorrects
+        '403':
+          description: Droits insuffisants / CSRF invalide
+        '404':
+          description: Ressource absente ou billet non autorisé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflit de places, d’idempotence, d’e-mail, de programmation
+            ou historique protégé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Limitation des tentatives
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security: []
       parameters:
-        - in: path
-          name: filmId
-          required: true
-          schema: {type: string, format: uuid}
-        - in: query
-          name: date
-          description: Defaults to today in Europe/Paris
-          schema: {type: string, format: date}
+      - name: filmId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ''
+      - name: date
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+        description: Jour Paris ; aujourd’hui par défaut
+  /catalog/screenings/{id}/seats:
+    get:
+      summary: Plan de la salle et places occupées
+      description: Plan de la salle et places occupées
+      tags:
+      - public
       responses:
         '200':
-          description: Screenings sorted by start time, including announced price
+          description: Succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plan'
+        '400':
+          description: Entrée invalide
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Session absente / identifiants incorrects
+        '403':
+          description: Droits insuffisants / CSRF invalide
+        '404':
+          description: Ressource absente ou billet non autorisé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflit de places, d’idempotence, d’e-mail, de programmation
+            ou historique protégé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Limitation des tentatives
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ''
+  /catalog/screenings/{id}/events:
+    get:
+      summary: Notifications SSE de rechargement
+      description: Événement refresh à la connexion puis après commit. heartbeat toutes
+        les 20 s. Recharger le plan après reconnexion. Aucun détail personnel.
+      tags:
+      - public
+      responses:
+        '200':
+          description: Succès
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        '400':
+          description: Entrée invalide
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Session absente / identifiants incorrects
+        '403':
+          description: Droits insuffisants / CSRF invalide
+        '404':
+          description: Ressource absente ou billet non autorisé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflit de places, d’idempotence, d’e-mail, de programmation
+            ou historique protégé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Limitation des tentatives
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ''
+  /auth/csrf:
+    get:
+      summary: Créer / retrouver un jeton CSRF de session
+      description: Créer / retrouver un jeton CSRF de session
+      tags:
+      - public
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Csrf'
+        '400':
+          description: Entrée invalide
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Session absente / identifiants incorrects
+        '403':
+          description: Droits insuffisants / CSRF invalide
+        '404':
+          description: Ressource absente ou billet non autorisé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflit de places, d’idempotence, d’e-mail, de programmation
+            ou historique protégé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Limitation des tentatives
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security: []
+  /auth/register:
+    post:
+      summary: Créer un client
+      description: Créer un client
+      tags:
+      - public
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '400':
+          description: Entrée invalide
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Session absente / identifiants incorrects
+        '403':
+          description: Droits insuffisants / CSRF invalide
+        '404':
+          description: Ressource absente ou billet non autorisé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflit de places, d’idempotence, d’e-mail, de programmation
+            ou historique protégé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Limitation des tentatives
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Register'
+      parameters:
+      - name: X-CSRF-TOKEN
+        in: header
+        required: true
+        schema:
+          type: string
+        description: Obtenu par GET /auth/csrf, avec le même cookie de session.
+  /auth/login:
+    post:
+      summary: Authentifier et renouveler la session
+      description: Authentifier et renouveler la session
+      tags:
+      - public
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '400':
+          description: Entrée invalide
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Session absente / identifiants incorrects
+        '403':
+          description: Droits insuffisants / CSRF invalide
+        '404':
+          description: Ressource absente ou billet non autorisé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflit de places, d’idempotence, d’e-mail, de programmation
+            ou historique protégé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Limitation des tentatives
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Login'
+      parameters:
+      - name: X-CSRF-TOKEN
+        in: header
+        required: true
+        schema:
+          type: string
+        description: Obtenu par GET /auth/csrf, avec le même cookie de session.
+  /auth/me:
+    get:
+      summary: Compte courant
+      description: Compte courant
+      tags:
+      - authenticated
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '400':
+          description: Entrée invalide
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Session absente / identifiants incorrects
+        '403':
+          description: Droits insuffisants / CSRF invalide
+        '404':
+          description: Ressource absente ou billet non autorisé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflit de places, d’idempotence, d’e-mail, de programmation
+            ou historique protégé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Limitation des tentatives
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+      - sessionCookie: []
+  /auth/logout:
+    post:
+      summary: Invalider la session
+      description: Invalider la session
+      tags:
+      - authenticated
+      responses:
+        '204':
+          description: Succès
+        '400':
+          description: Entrée invalide
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Session absente / identifiants incorrects
+        '403':
+          description: Droits insuffisants / CSRF invalide
+        '404':
+          description: Ressource absente ou billet non autorisé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflit de places, d’idempotence, d’e-mail, de programmation
+            ou historique protégé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Limitation des tentatives
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+      - sessionCookie: []
+      parameters:
+      - name: X-CSRF-TOKEN
+        in: header
+        required: true
+        schema:
+          type: string
+        description: Obtenu par GET /auth/csrf, avec le même cookie de session.
+  /reservations:
+    post:
+      summary: Confirmation atomique en ligne
+      description: 1 à 10 places ; prix serveur. Même acteur + clé + contenu canonique
+        = même billet. Contenu différent = 409. Aucun paiement en ligne.
+      tags:
+      - authenticated
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+        '400':
+          description: Entrée invalide
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Session absente / identifiants incorrects
+        '403':
+          description: Droits insuffisants / CSRF invalide
+        '404':
+          description: Ressource absente ou billet non autorisé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflit de places, d’idempotence, d’e-mail, de programmation
+            ou historique protégé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Limitation des tentatives
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+      - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Booking'
+      parameters:
+      - name: X-CSRF-TOKEN
+        in: header
+        required: true
+        schema:
+          type: string
+        description: Obtenu par GET /auth/csrf, avec le même cookie de session.
+    get:
+      summary: 100 dernières réservations du client
+      description: 100 dernières réservations du client
+      tags:
+      - authenticated
+      responses:
+        '200':
+          description: Succès
           content:
             application/json:
               schema:
                 type: array
-                items: {$ref: '#/components/schemas/Screening'}
-        '400': {description: Invalid UUID or date}
-        '404': {description: Missing or unpublished film}
+                items:
+                  $ref: '#/components/schemas/Ticket'
+        '400':
+          description: Entrée invalide
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Session absente / identifiants incorrects
+        '403':
+          description: Droits insuffisants / CSRF invalide
+        '404':
+          description: Ressource absente ou billet non autorisé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflit de places, d’idempotence, d’e-mail, de programmation
+            ou historique protégé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Limitation des tentatives
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+      - sessionCookie: []
+  /reservations/{id}:
+    get:
+      summary: Billet privé
+      description: Propriétaire ou STAFF / ADMIN uniquement. Retourne 404 aux autres
+        clients, même si le billet existe.
+      tags:
+      - authenticated
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+        '400':
+          description: Entrée invalide
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Session absente / identifiants incorrects
+        '403':
+          description: Droits insuffisants / CSRF invalide
+        '404':
+          description: Ressource absente ou billet non autorisé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflit de places, d’idempotence, d’e-mail, de programmation
+            ou historique protégé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Limitation des tentatives
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+      - sessionCookie: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ''
+  /staff/reservations:
+    post:
+      summary: Confirmer au guichet, stock partagé
+      description: Confirmer au guichet, stock partagé
+      tags:
+      - STAFF / ADMIN
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+        '400':
+          description: Entrée invalide
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Session absente / identifiants incorrects
+        '403':
+          description: Droits insuffisants / CSRF invalide
+        '404':
+          description: Ressource absente ou billet non autorisé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflit de places, d’idempotence, d’e-mail, de programmation
+            ou historique protégé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Limitation des tentatives
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+      - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Booking'
+      parameters:
+      - name: X-CSRF-TOKEN
+        in: header
+        required: true
+        schema:
+          type: string
+        description: Obtenu par GET /auth/csrf, avec le même cookie de session.
+    get:
+      summary: Recherche paginée des réservations
+      description: Recherche paginée des réservations
+      tags:
+      - STAFF / ADMIN
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Search'
+        '400':
+          description: Entrée invalide
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Session absente / identifiants incorrects
+        '403':
+          description: Droits insuffisants / CSRF invalide
+        '404':
+          description: Ressource absente ou billet non autorisé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflit de places, d’idempotence, d’e-mail, de programmation
+            ou historique protégé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Limitation des tentatives
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+      - sessionCookie: []
+      parameters:
+      - name: reference
+        in: query
+        required: false
+        schema:
+          type: string
+        description: ''
+      - name: screeningId
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+        description: ''
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          maximum: 100000
+          default: 0
+        description: ''
+  /staff/occupancy:
+    get:
+      summary: Occupation par séance sur une période inclusive
+      description: Occupation par séance sur une période inclusive
+      tags:
+      - STAFF / ADMIN
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Occupancy'
+        '400':
+          description: Entrée invalide
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Session absente / identifiants incorrects
+        '403':
+          description: Droits insuffisants / CSRF invalide
+        '404':
+          description: Ressource absente ou billet non autorisé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflit de places, d’idempotence, d’e-mail, de programmation
+            ou historique protégé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Limitation des tentatives
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+      - sessionCookie: []
+      parameters:
+      - name: from
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+        description: ''
+      - name: to
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+        description: ''
+      - name: threshold
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 0
+        description: ''
+  /staff/analytics:
+    get:
+      summary: Places réservées par jour / heure / semaine ou week-end
+      description: '1 à 366 jours, heure Paris. Comparaison facultative : deux dates
+        ensemble, durée égale, périodes distinctes. Aucun chiffre d’entrée réelle
+        ni prévision.'
+      tags:
+      - STAFF / ADMIN
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Analytics'
+        '400':
+          description: Entrée invalide
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Session absente / identifiants incorrects
+        '403':
+          description: Droits insuffisants / CSRF invalide
+        '404':
+          description: Ressource absente ou billet non autorisé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflit de places, d’idempotence, d’e-mail, de programmation
+            ou historique protégé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Limitation des tentatives
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+      - sessionCookie: []
+      parameters:
+      - name: from
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+        description: ''
+      - name: to
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+        description: ''
+      - name: baselineFrom
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+        description: ''
+      - name: baselineTo
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+        description: ''
+  /admin/films:
+    get:
+      summary: Liste administration AdminFilm
+      description: Liste administration AdminFilm
+      tags:
+      - ADMIN
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminFilm'
+        '400':
+          description: Entrée invalide
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Session absente / identifiants incorrects
+        '403':
+          description: Droits insuffisants / CSRF invalide
+        '404':
+          description: Ressource absente ou billet non autorisé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflit de places, d’idempotence, d’e-mail, de programmation
+            ou historique protégé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Limitation des tentatives
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+      - sessionCookie: []
+    post:
+      summary: Créer un film
+      description: Créer un film
+      tags:
+      - ADMIN
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Id'
+        '400':
+          description: Entrée invalide
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Session absente / identifiants incorrects
+        '403':
+          description: Droits insuffisants / CSRF invalide
+        '404':
+          description: Ressource absente ou billet non autorisé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflit de places, d’idempotence, d’e-mail, de programmation
+            ou historique protégé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Limitation des tentatives
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+      - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FilmInput'
+      parameters:
+      - name: X-CSRF-TOKEN
+        in: header
+        required: true
+        schema:
+          type: string
+        description: Obtenu par GET /auth/csrf, avec le même cookie de session.
+  /admin/rooms:
+    get:
+      summary: Liste administration Room
+      description: Liste administration Room
+      tags:
+      - ADMIN
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Room'
+        '400':
+          description: Entrée invalide
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Session absente / identifiants incorrects
+        '403':
+          description: Droits insuffisants / CSRF invalide
+        '404':
+          description: Ressource absente ou billet non autorisé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflit de places, d’idempotence, d’e-mail, de programmation
+            ou historique protégé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Limitation des tentatives
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+      - sessionCookie: []
+  /admin/screenings:
+    get:
+      summary: Liste administration AdminScreening
+      description: Liste administration AdminScreening
+      tags:
+      - ADMIN
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminScreening'
+        '400':
+          description: Entrée invalide
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Session absente / identifiants incorrects
+        '403':
+          description: Droits insuffisants / CSRF invalide
+        '404':
+          description: Ressource absente ou billet non autorisé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflit de places, d’idempotence, d’e-mail, de programmation
+            ou historique protégé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Limitation des tentatives
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+      - sessionCookie: []
+    post:
+      summary: Programmer avec durée + remise en état
+      description: Programmer avec durée + remise en état
+      tags:
+      - ADMIN
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Id'
+        '400':
+          description: Entrée invalide
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Session absente / identifiants incorrects
+        '403':
+          description: Droits insuffisants / CSRF invalide
+        '404':
+          description: Ressource absente ou billet non autorisé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflit de places, d’idempotence, d’e-mail, de programmation
+            ou historique protégé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Limitation des tentatives
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+      - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShowInput'
+      parameters:
+      - name: X-CSRF-TOKEN
+        in: header
+        required: true
+        schema:
+          type: string
+        description: Obtenu par GET /auth/csrf, avec le même cookie de session.
+  /admin/films/{id}:
+    put:
+      summary: Modifier un film non programmé
+      description: Modifier un film non programmé
+      tags:
+      - ADMIN
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Id'
+        '400':
+          description: Entrée invalide
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Session absente / identifiants incorrects
+        '403':
+          description: Droits insuffisants / CSRF invalide
+        '404':
+          description: Ressource absente ou billet non autorisé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflit de places, d’idempotence, d’e-mail, de programmation
+            ou historique protégé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Limitation des tentatives
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+      - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FilmInput'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ''
+      - name: X-CSRF-TOKEN
+        in: header
+        required: true
+        schema:
+          type: string
+        description: Obtenu par GET /auth/csrf, avec le même cookie de session.
+    delete:
+      summary: Supprimer un film jamais programmé
+      description: ADMIN uniquement. Un film programmé doit être dépublié pour préserver
+        les références.
+      tags:
+      - ADMIN
+      security:
+      - sessionCookie: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-CSRF-TOKEN
+        in: header
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          description: Film supprimé
+        '401':
+          description: Session absente
+        '403':
+          description: Droits ou CSRF insuffisants
+        '404':
+          description: Film absent
+        '409':
+          description: Film déjà programmé
+  /admin/films/{id}/publication:
+    patch:
+      summary: Publier / masquer sans altérer les billets
+      description: Publier / masquer sans altérer les billets
+      tags:
+      - ADMIN
+      responses:
+        '200':
+          description: Succès
+        '400':
+          description: Entrée invalide
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Session absente / identifiants incorrects
+        '403':
+          description: Droits insuffisants / CSRF invalide
+        '404':
+          description: Ressource absente ou billet non autorisé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflit de places, d’idempotence, d’e-mail, de programmation
+            ou historique protégé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Limitation des tentatives
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+      - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Publication'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ''
+      - name: X-CSRF-TOKEN
+        in: header
+        required: true
+        schema:
+          type: string
+        description: Obtenu par GET /auth/csrf, avec le même cookie de session.
+  /admin/screenings/{id}:
+    put:
+      summary: Modifier une séance sans réservation
+      description: Modifier une séance sans réservation
+      tags:
+      - ADMIN
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Id'
+        '400':
+          description: Entrée invalide
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Session absente / identifiants incorrects
+        '403':
+          description: Droits insuffisants / CSRF invalide
+        '404':
+          description: Ressource absente ou billet non autorisé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflit de places, d’idempotence, d’e-mail, de programmation
+            ou historique protégé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Limitation des tentatives
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+      - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShowInput'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ''
+      - name: X-CSRF-TOKEN
+        in: header
+        required: true
+        schema:
+          type: string
+        description: Obtenu par GET /auth/csrf, avec le même cookie de session.
+  /admin/screenings/{id}/cancel:
+    post:
+      summary: Annuler une séance sans réservation
+      description: Annuler une séance sans réservation
+      tags:
+      - ADMIN
+      responses:
+        '200':
+          description: Succès
+        '400':
+          description: Entrée invalide
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Session absente / identifiants incorrects
+        '403':
+          description: Droits insuffisants / CSRF invalide
+        '404':
+          description: Ressource absente ou billet non autorisé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflit de places, d’idempotence, d’e-mail, de programmation
+            ou historique protégé
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Limitation des tentatives
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+      - sessionCookie: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ''
+      - name: X-CSRF-TOKEN
+        in: header
+        required: true
+        schema:
+          type: string
+        description: Obtenu par GET /auth/csrf, avec le même cookie de session.
 components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: CINEMA_SESSION
   schemas:
+    Problem:
+      type: object
+      properties:
+        status:
+          type: integer
+        detail:
+          type: string
+        title:
+          type: string
+    Account:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        displayName:
+          type: string
+        role:
+          type: string
+          enum:
+          - CLIENT
+          - STAFF
+          - ADMIN
+    Register:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        password:
+          type: string
+          minLength: 12
+          maxLength: 72
+          description: 72 octets UTF-8 maximum
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 100
+      required:
+      - email
+      - password
+      - displayName
+    Login:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required:
+      - email
+      - password
+    Csrf:
+      type: object
+      properties:
+        token:
+          type: string
+        headerName:
+          type: string
     Film:
       type: object
-      required: [id, title, synopsis, durationMinutes, genre, posterUrl]
       properties:
-        id: {type: string, format: uuid}
-        title: {type: string}
-        synopsis: {type: string}
-        durationMinutes: {type: integer}
-        genre: {type: string}
-        posterUrl: {type: string, nullable: true}
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        synopsis:
+          type: string
+        durationMinutes:
+          type: integer
+        genre:
+          type: string
+        posterUrl:
+          type: string
+          nullable: true
     Screening:
       type: object
-      required: [id, filmId, roomName, startsAt, priceCents]
       properties:
-        id: {type: string, format: uuid}
-        filmId: {type: string, format: uuid}
-        roomName: {type: string}
-        startsAt: {type: string, format: date-time}
-        priceCents: {type: integer, minimum: 0}
+        id:
+          type: string
+          format: uuid
+        filmId:
+          type: string
+          format: uuid
+        roomName:
+          type: string
+        startsAt:
+          type: string
+          format: date-time
+        priceCents:
+          type: integer
+    Seat:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        rowNumber:
+          type: integer
+        seatNumber:
+          type: integer
+        occupied:
+          type: boolean
+    Plan:
+      type: object
+      properties:
+        screeningId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        roomName:
+          type: string
+        startsAt:
+          type: string
+          format: date-time
+        priceCents:
+          type: integer
+        seats:
+          type: array
+          items:
+            $ref: '#/components/schemas/Seat'
+    Booking:
+      type: object
+      properties:
+        screeningId:
+          type: string
+          format: uuid
+        seatIds:
+          type: array
+          minItems: 1
+          maxItems: 10
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+        idempotencyKey:
+          type: string
+          format: uuid
+      required:
+      - screeningId
+      - seatIds
+      - idempotencyKey
+    Ticket:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        reference:
+          type: string
+        title:
+          type: string
+        roomName:
+          type: string
+        startsAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+          - CONFIRMED
+          - CANCELLED
+        channel:
+          type: string
+          enum:
+          - WEB
+          - BOX_OFFICE
+        totalCents:
+          type: integer
+        seats:
+          type: array
+          items:
+            type: string
+    FilmInput:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        synopsis:
+          type: string
+          minLength: 1
+          maxLength: 10000
+        durationMinutes:
+          type: integer
+          minimum: 1
+          maximum: 600
+        genre:
+          type: string
+          minLength: 1
+          maxLength: 60
+        posterUrl:
+          type: string
+          maxLength: 500
+          description: URL HTTPS ou chaîne vide
+        published:
+          type: boolean
+      required:
+      - title
+      - synopsis
+      - durationMinutes
+      - genre
+      - published
+    ShowInput:
+      type: object
+      properties:
+        filmId:
+          type: string
+          format: uuid
+        roomId:
+          type: string
+          format: uuid
+        startsAt:
+          type: string
+          format: date-time
+        priceCents:
+          type: integer
+          minimum: 0
+          maximum: 100000
+      required:
+      - filmId
+      - roomId
+      - startsAt
+      - priceCents
+    Id:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+    Publication:
+      type: object
+      properties:
+        published:
+          type: boolean
+      required:
+      - published
+    AdminFilm:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        synopsis:
+          type: string
+        duration_minutes:
+          type: integer
+        genre:
+          type: string
+        poster_url:
+          type: string
+          nullable: true
+        published:
+          type: boolean
+    Room:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        category:
+          type: string
+        capacity:
+          type: integer
+        turnaround_minutes:
+          type: integer
+    AdminScreening:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        film_id:
+          type: string
+          format: uuid
+        room_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        room_name:
+          type: string
+        starts_at:
+          type: string
+          format: date-time
+        ends_at:
+          type: string
+          format: date-time
+        occupied_until:
+          type: string
+          format: date-time
+        price_cents:
+          type: integer
+        cancelled:
+          type: boolean
+    ReservationRow:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        reference:
+          type: string
+        status:
+          type: string
+        channel:
+          type: string
+        total_cents:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        starts_at:
+          type: string
+          format: date-time
+        title:
+          type: string
+        room_name:
+          type: string
+        seats:
+          type: integer
+    Search:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReservationRow'
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        total:
+          type: integer
+    Occupancy:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        starts_at:
+          type: string
+          format: date-time
+        title:
+          type: string
+        room_name:
+          type: string
+        capacity:
+          type: integer
+        booked_seats:
+          type: integer
+        occupancy_percent:
+          type: number
+    Bucket:
+      type: object
+      properties:
+        day:
+          type: string
+          format: date
+        hour:
+          type: integer
+        weekend:
+          type: boolean
+        screenings:
+          type: integer
+        booked_seats:
+          type: integer
+    Analytics:
+      type: object
+      properties:
+        from:
+          type: string
+          format: date
+        to:
+          type: string
+          format: date
+        current:
+          type: array
+          items:
+            $ref: '#/components/schemas/Bucket'
+        baseline:
+          type: array
+          items:
+            $ref: '#/components/schemas/Bucket'
+        limitation:
+          type: string
