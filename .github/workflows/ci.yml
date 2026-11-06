@@ -24,6 +24,7 @@ jobs:
       DB_URL: jdbc:postgresql://localhost:5432/cinema_test
       DB_USERNAME: cinema
       DB_PASSWORD: ci-test-only
+      DEMO_PASSWORD: ci-demo-only-password
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4

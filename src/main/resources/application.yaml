@@ -28,4 +28,5 @@ management:
     health:
       show-details: never
 cinema:
+  secure-cookies: ${SECURE_COOKIES:false}
   allowed-origins: ${ALLOWED_ORIGINS:http://localhost:4200}
