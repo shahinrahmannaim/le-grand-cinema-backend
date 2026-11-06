@@ -1,0 +1,64 @@
+openapi: 3.0.3
+info:
+  title: Le Grand Cinéma — Catalogue
+  version: 0.1.0
+  description: Public read-only API. Booking and authentication are not implemented in this increment.
+servers:
+  - url: http://localhost:8080
+paths:
+  /api/catalog/films:
+    get:
+      summary: Published films with a future non-cancelled screening
+      operationId: listFilms
+      responses:
+        '200':
+          description: Films, sorted by title; an empty list is valid
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/Film'}
+  /api/catalog/films/{filmId}/screenings:
+    get:
+      summary: Future non-cancelled screenings on a cinema day in Europe/Paris
+      operationId: listScreenings
+      parameters:
+        - in: path
+          name: filmId
+          required: true
+          schema: {type: string, format: uuid}
+        - in: query
+          name: date
+          description: Defaults to today in Europe/Paris
+          schema: {type: string, format: date}
+      responses:
+        '200':
+          description: Screenings sorted by start time, including announced price
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/Screening'}
+        '400': {description: Invalid UUID or date}
+        '404': {description: Missing or unpublished film}
+components:
+  schemas:
+    Film:
+      type: object
+      required: [id, title, synopsis, durationMinutes, genre, posterUrl]
+      properties:
+        id: {type: string, format: uuid}
+        title: {type: string}
+        synopsis: {type: string}
+        durationMinutes: {type: integer}
+        genre: {type: string}
+        posterUrl: {type: string, nullable: true}
+    Screening:
+      type: object
+      required: [id, filmId, roomName, startsAt, priceCents]
+      properties:
+        id: {type: string, format: uuid}
+        filmId: {type: string, format: uuid}
+        roomName: {type: string}
+        startsAt: {type: string, format: date-time}
+        priceCents: {type: integer, minimum: 0}
