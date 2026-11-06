@@ -106,5 +106,15 @@ class StatisticsIT {
         assertThrows(ApiException.class, () -> staff.analytics(day, day.minusDays(1), null, null));
     }
 
-
+    @Test
+    void occupancyAlertFiltersAtExactThresholdWithoutChangingTheProgramme() {
+        bookings.confirm(actor, new BookingService.Request(show, seats, UUID.randomUUID()), false);
+        assertEquals(show, row(20).get("id"));
+        assertTrue(staff.occupancy(day, day, 21).stream().noneMatch(r -> show.equals(r.get("id"))));
+        assertEquals(
+                false,
+                jdbc.queryForObject(
+                        "SELECT cancelled FROM screening WHERE id=?", Boolean.class, show));
+        assertThrows(ApiException.class, () -> staff.occupancy(day, day, -1));
+    }
 }
