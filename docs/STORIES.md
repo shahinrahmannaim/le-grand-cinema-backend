@@ -2,8 +2,8 @@
 
 | Histoire | Périmètre | État de réalisation |
 |---|---|---|
-| US01 | Catalogue des films | À réaliser |
-| US02 | Séances par date | À réaliser |
+| US01 | Catalogue des films | Code initial ; recette à vérifier |
+| US02 | Séances par date | Code initial ; recette à vérifier |
 | US03 | Disponibilité en temps réel | À réaliser |
 | US04 | Sélection des places | À réaliser |
 | US05 | Comptes et accès sécurisé | À réaliser |

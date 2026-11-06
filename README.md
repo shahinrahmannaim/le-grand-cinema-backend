@@ -10,3 +10,6 @@ No authentication or reservation endpoints are implemented yet.
 
 main: releases; develop: integration; feature/usXX-description: Trello story; fix/description: bug fix.
 Open pull requests into develop. Do not claim a PR or deployment before it exists.
+
+US01 is implemented: GET /api/catalog/films returns published, scheduled films.
+The screening endpoint is the next story, US02.
