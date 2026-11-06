@@ -114,7 +114,7 @@ public class StaffController {
     private List<Map<String, Object>> aggregate(LocalDate from, LocalDate to) {
         return jdbc.queryForList(
                 """
-                SELECT (s.starts_at AT TIME ZONE 'Europe/Paris')::date AS day,
+                SELECT (s.starts_at AT TIME ZONE 'Europe/Paris')::date::text AS day,
                     extract(hour from s.starts_at AT TIME ZONE 'Europe/Paris')::int AS hour,
                     extract(isodow from s.starts_at AT TIME ZONE 'Europe/Paris') IN (6,7) AS weekend,
                     count(DISTINCT s.id) AS screenings,count(b.id) AS booked_seats

@@ -93,5 +93,18 @@ class StatisticsIT {
         assertEquals(20.0, ((Number) row(0).get("occupancy_percent")).doubleValue());
     }
 
+    @Test
+    void comparisonKeepsParisCalendarDateAndRejectsIncomparablePeriods() {
+        bookings.confirm(actor, new BookingService.Request(show, seats, UUID.randomUUID()), false);
+        var report = staff.analytics(day, day, day.minusDays(7), day.minusDays(7));
+        assertTrue(report.get("current").toString().contains(day.toString()));
+        assertTrue(report.get("current").toString().contains("weekend=true"));
+        assertThrows(
+                ApiException.class,
+                () -> staff.analytics(day, day, day.minusDays(7), day.minusDays(6)));
+        assertThrows(ApiException.class, () -> staff.analytics(day, day.plusDays(366), null, null));
+        assertThrows(ApiException.class, () -> staff.analytics(day, day.minusDays(1), null, null));
+    }
+
 
 }
