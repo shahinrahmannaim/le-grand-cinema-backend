@@ -67,6 +67,9 @@ public class SecurityConfig {
                                         .requestMatchers(
                                                 HttpMethod.GET,
                                                 "/actuator/health",
+                                                "/swagger-ui.html",
+                                                "/api/docs",
+                                                "/api/docs/**",
                                                 "/api/catalog/**",
                                                 "/api/auth/csrf")
                                         .permitAll()

@@ -30,3 +30,6 @@ replay_pid*
 .env.*
 !.env.example
 !.mvn/wrapper/maven-wrapper.jar
+
+.scannerwork/
+.sonar/

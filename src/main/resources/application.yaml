@@ -28,5 +28,6 @@ management:
     health:
       show-details: never
 cinema:
+  swagger-ui-version: 5.35.0
   secure-cookies: ${SECURE_COOKIES:false}
   allowed-origins: ${ALLOWED_ORIGINS:http://localhost:4200}

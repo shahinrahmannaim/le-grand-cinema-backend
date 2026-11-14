@@ -25,6 +25,18 @@ Ouvrir une **vraie pull request** de `feature/us15-occupancy-alerts` vers `devel
 
 Ne pas prétendre qu’une auto-revue est une revue indépendante. Le correcteur doit pouvoir consulter le véritable numéro de PR, la CI et les commits publics. Protéger `main` et `develop` avec les checks requis avant fusion.
 
+## Ajout Swagger / Sonar du backend
+
+La livraison backend actualisée est sur `feature/swagger-sonar-ci`, qui descend de `feature/us15-occupancy-alerts` et contient tout le code applicatif. La branche US15 conserve son état précédent. L'archive ouvre directement cette nouvelle branche.
+
+Après intégration de US15 dans `develop`, publier `feature/swagger-sonar-ci` et ouvrir sa PR vers `develop` pour rendre l'ajout Swagger / Sonar distinct dans la revue :
+
+```bash
+git push -u origin feature/swagger-sonar-ci
+```
+
+Puis intégrer `develop` dans `main` par PR après validation. Si US15 n'a pas encore été intégrée, la PR de cette nouvelle branche inclura aussi les fonctionnalités précédentes : ne pas la décrire comme un petit ajout isolé. Le frontend n'a pas changé pour cet ajout backend.
+
 ## Mises à jour ultérieures
 
 Après une fusion distante, revenir sur la branche souhaitée et récupérer les changements avec `git pull --ff-only`. Installer les nouvelles dépendances seulement si `pom.xml` / `package-lock.json` changent ; Flyway applique les nouvelles migrations au démarrage. Les changements suivants peuvent être proposés par branches et PR : aucune recopie régulière des fichiers n’est nécessaire.

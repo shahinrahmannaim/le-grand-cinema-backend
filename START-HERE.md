@@ -12,3 +12,5 @@ Keep the two folders separate. Open the backend folder in IntelliJ and the front
 Both projects have code, automated tests, CI configuration and deployment instructions. The downloads do not by themselves publish a website or complete the Studi submission. Actual public URLs, real PR / CI links and a browser acceptance check must be added after deployment. Consult `docs/VALIDATION.md` for exactly what was tested.
 
 For later updates, use Git branches / pull requests and `git pull --ff-only`. Do not repeatedly paste source files into the IDE.
+
+Backend update: this archive opens `feature/swagger-sonar-ci` with the complete backend plus Swagger UI and Sonar CI configuration. Open http://localhost:8080/swagger-ui.html after startup. Read `docs/QUALITY.md` to activate Sonar with your GitHub secret and repository variables. The scanner has not run against a Sonar account yet.

@@ -63,10 +63,15 @@ DB_URL=jdbc:postgresql://localhost:5433/cinema_test DB_PASSWORD=local-developmen
 
 Ne pas recréer une base déjà existante. Les tests d’intégration écrivent des données fictives ; certains les nettoient, d’autres conservent des fixtures. Ne jamais viser la base de production. La CI utilise un PostgreSQL 17 jetable. Les tests HTTP vérifient aussi la session JDBC, CSRF et les rôles. La concurrence teste 20 clients réels au niveau du service transactionnel, avec la vraie base.
 
+Swagger UI : http://localhost:8080/swagger-ui.html après démarrage. Le contrat est servi sur `/api/docs/openapi.yaml`. La connexion par session et les jetons CSRF restent nécessaires pour les opérations privées ; voir [QUALITY](docs/QUALITY.md).
+
+SonarQube Cloud : scanner Maven et étape de CI avec attente du Quality Gate configurés. Il faut renseigner le secret et les variables GitHub décrits dans [QUALITY](docs/QUALITY.md) avant activation. Aucune analyse distante réussie n’est revendiquée.
+
 Rapports : `target/surefire-reports`, `target/failsafe-reports`, `target/site/jacoco/index.html`. Checkstyle vérifie les imports, l’absence d’imports globaux et les noms de fichiers. Ces règles constituent un contrôle statique limité, pas un audit complet de sécurité. Les résultats effectivement obtenus et les limites de vérification figurent dans [VALIDATION](docs/VALIDATION.md).
 
 ## Documentation
 
+- [Swagger, JaCoCo et activation Sonar](docs/QUALITY.md).
 - [Contrat OpenAPI](docs/openapi.yaml) : tous les endpoints, rôles, erreurs et corps JSON.
 - [Architecture et modèle](docs/ARCHITECTURE.md), schéma SQL dans `src/main/resources/db/migration/`.
 - [Traçabilité US01–US15](docs/STORIES.md), [recette](docs/ACCEPTANCE.md).

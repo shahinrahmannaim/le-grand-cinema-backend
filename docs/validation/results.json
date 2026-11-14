@@ -88,5 +88,61 @@
     "GitHub remote CI and pull requests",
     "public cloud deployment and end-to-end hosted acceptance",
     "k6 load test, security audit and restoration exercise"
-  ]
+  ],
+  "swagger_sonar_update": {
+    "date_utc": "2026-11-14",
+    "unit": {
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "postgresql_integration": {
+      "tests": 26,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "jacoco": {
+      "INSTRUCTION": {
+        "covered": 2649,
+        "missed": 232,
+        "percent": 91.95
+      },
+      "BRANCH": {
+        "covered": 91,
+        "missed": 33,
+        "percent": 73.39
+      },
+      "LINE": {
+        "covered": 487,
+        "missed": 41,
+        "percent": 92.23
+      },
+      "COMPLEXITY": {
+        "covered": 165,
+        "missed": 43,
+        "percent": 79.33
+      },
+      "METHOD": {
+        "covered": 133,
+        "missed": 13,
+        "percent": 91.1
+      },
+      "CLASS": {
+        "covered": 37,
+        "missed": 0,
+        "percent": 100.0
+      }
+    },
+    "swagger_node_tests": {
+      "tests": 4,
+      "failures": 0
+    },
+    "maven_database_verify": "passed",
+    "checkstyle": "passed",
+    "swagger_http_assets_and_spec": "passed",
+    "sonar_remote_analysis": "not executed; account token and project keys required",
+    "browser_visual_check": "not executed"
+  }
 }

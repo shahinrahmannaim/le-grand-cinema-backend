@@ -4,6 +4,7 @@ COPY .mvn .mvn
 COPY mvnw pom.xml checkstyle.xml ./
 RUN chmod +x mvnw && ./mvnw -B dependency:go-offline
 COPY src src
+COPY docs/openapi.yaml docs/openapi.yaml
 RUN ./mvnw -B verify
 
 FROM eclipse-temurin:21-jre

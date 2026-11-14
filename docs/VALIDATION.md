@@ -47,3 +47,22 @@ Java 21.0.13, Spring Boot 4.1.2, PostgreSQL natif 17.6, Node 24.22.1, Angular 22
 - Les règles métier encore ouvertes et la recette du cinéma nécessitent une validation humaine.
 
 Le fichier `docs/validation/results.json` conserve les compteurs extraits des rapports. Pour reproduire les rapports détaillés, suivre les README. Après publication, compléter ce document avec les liens réels et la recette sur l’environnement public.
+
+
+## Actualisation Swagger / Sonar — 2026-11-14 (UTC)
+
+Le backend de la branche `feature/swagger-sonar-ci` a été revérifié avec Java 21.0.13 et une nouvelle base PostgreSQL 17.6 isolée :
+
+| Contrôle | Résultat observé |
+|---|---|
+| Maven `-Pdatabase-tests clean verify` | BUILD SUCCESS |
+| JUnit unitaires | 6 réussis, aucun échec / erreur / ignoré |
+| Intégration PostgreSQL / HTTP, dont documentation | 26 réussis, aucun échec / erreur / ignoré |
+| Initialiseur Swagger, Node test | 4 réussis |
+| Checkstyle | Aucune violation |
+| JaCoCo lignes Java | 92,23 % (487 couvertes / 528) |
+| JaCoCo branches Java | 73,39 % (91 / 124) |
+
+Les trois nouveaux tests HTTP vérifient la redirection Swagger, la page, le contrat OpenAPI, les ressources JS / CSS embarquées, l'initialiseur CSRF et le maintien des réponses 401 / 403 pour les appels privés sans session / jeton. Les tests Node vérifient l'ajout du jeton et le refus des destinations externes. La couverture Java n'inclut pas ces tests JavaScript. Le frontend n'a pas été modifié ni revérifié pour cet ajout backend ; ses résultats précédents restent datés ci-dessus.
+
+Le scanner Sonar et l'attente du Quality Gate sont configurés, mais **aucune analyse Sonar distante n'a été exécutée** sans organisation, clé de projet et jeton. Aucune note Sonar ni réussite du Quality Gate n'est revendiquée. Suivre QUALITY pour l'activation. La vérification HTTP de Swagger ne constitue pas une recette visuelle dans un vrai navigateur. Docker, déploiement et GitHub restent soumis aux limites déjà précisées.
