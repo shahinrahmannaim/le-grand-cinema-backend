@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Le Grand Cinéma - Documentation API</title>
+    <link rel="stylesheet" href="/api/docs/assets/swagger-ui.css" />
+    <link rel="stylesheet" href="/api/docs/docs.css" />
+  </head>
+  <body>
+    <header class="intro">
+      <h1>Le Grand Cinéma - API</h1>
+      <p>
+        Contrat OpenAPI, prix en centimes EUR et séances affichées en heure de
+        Paris.
+      </p>
+      <p>
+        Pour les routes privées : exécutez
+        <strong>POST /auth/login</strong> avec « Try it out ». Le navigateur
+        conserve la session HttpOnly. Chaque écriture reçoit automatiquement un
+        jeton CSRF de cette même session. Inutile de saisir le cookie dans «
+        Authorize ».
+      </p>
+      <p>
+        Testez avec des données de démonstration. Les confirmations et
+        modifications ont un effet réel sur la base utilisée.
+      </p>
+    </header>
+    <div id="swagger-ui"></div>
+    <script src="/api/docs/assets/swagger-ui-bundle.js"></script>
+    <script src="/api/docs/swagger-initializer.js"></script>
+  </body>
+</html>
