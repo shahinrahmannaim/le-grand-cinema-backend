@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: le-grand-cinema-backend
+    runtime: docker
+    plan: free
+    region: frankfurt
+    branch: main
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: DB_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: SECURE_COOKIES
+        value: 'true'
+      - key: SPRING_PROFILES_ACTIVE
+        value: demo
+      - key: DEMO_PASSWORD
+        sync: false
