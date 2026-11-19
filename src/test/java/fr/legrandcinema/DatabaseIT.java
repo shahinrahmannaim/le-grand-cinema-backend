@@ -29,6 +29,25 @@ class DatabaseIT {
     }
 
     @Test
+    void demoCatalogueContainsTenDistinctPublishedFilmsAndSevenNewScheduledTitles() {
+        assertEquals(
+                10,
+                jdbc.queryForObject(
+                        "SELECT count(*) FROM film WHERE published AND id BETWEEN"
+                            + " '10000000-0000-0000-0000-000000000001'::uuid AND"
+                            + " '10000000-0000-0000-0000-000000000010'::uuid",
+                        Integer.class));
+        assertEquals(
+                7,
+                jdbc.queryForObject(
+                        "SELECT count(DISTINCT film_id) FROM screening WHERE NOT cancelled"
+                            + " AND starts_at > now() AND film_id BETWEEN"
+                            + " '10000000-0000-0000-0000-000000000004'::uuid AND"
+                            + " '10000000-0000-0000-0000-000000000010'::uuid",
+                        Integer.class));
+    }
+
+    @Test
     void overlappingScreeningsInTheSameRoomAreRejected() {
         UUID film = UUID.randomUUID();
         UUID room = jdbc.queryForObject("SELECT id FROM room ORDER BY name LIMIT 1", UUID.class);
