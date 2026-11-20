@@ -1,16 +1,17 @@
 /* Same-origin session authentication; CSRF remains enabled on every API write. */
 window.cinemaSwaggerRequest = async function (request) {
   const target = new URL(request.url, window.location.origin);
+  const method = (request.method || "GET").toUpperCase();
   if (
     target.origin !== window.location.origin ||
-    !target.pathname.startsWith("/api/")
+    (!target.pathname.startsWith("/api/") &&
+      !(target.pathname === "/" && method === "GET"))
   ) {
     throw new Error(
       "La documentation ne peut appeler que l’API de cette origine.",
     );
   }
   request.credentials = "same-origin";
-  const method = (request.method || "GET").toUpperCase();
   if (!["GET", "HEAD", "OPTIONS"].includes(method)) {
     const response = await fetch("/api/auth/csrf", {
       credentials: "same-origin",
