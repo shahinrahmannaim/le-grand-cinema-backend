@@ -25,6 +25,18 @@ test("public GET uses the browser session without fetching a CSRF token", async 
   });
   assert.equal(result.credentials, "same-origin");
 });
+test("cinema home GET is allowed on the same origin without a CSRF token", async () => {
+  const interceptor = setup(() => assert.fail("Unexpected CSRF fetch"));
+  const result = await interceptor({ url: "/", method: "GET" });
+  assert.equal(result.credentials, "same-origin");
+});
+test("the home exception does not allow root writes or another origin", async () => {
+  const interceptor = setup(() => assert.fail("Unexpected CSRF fetch"));
+  await assert.rejects(interceptor({ url: "/", method: "POST" }));
+  await assert.rejects(
+    interceptor({ url: "https://other.example/", method: "GET" }),
+  );
+});
 test("login POST receives a fresh CSRF token and preserves the request body", async () => {
   let count = 0;
   const interceptor = setup(async (url, options) => {
