@@ -9,6 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 
 /** Explicit demo profile only; no real customers or password in source control. */
 @Component
@@ -37,7 +38,7 @@ public class DemoAccounts implements ApplicationRunner {
             jdbc.update(
                     "INSERT INTO app_user(email,password_hash,display_name,role) VALUES(?,?,?,?) ON"
                         + " CONFLICT(email) DO NOTHING",
-                    role.toLowerCase() + "@demo.cinema.test",
+                    role.toLowerCase(Locale.ROOT) + "@demo.cinema.test",
                     encoder.encode(password),
                     "Démo " + role,
                     role);

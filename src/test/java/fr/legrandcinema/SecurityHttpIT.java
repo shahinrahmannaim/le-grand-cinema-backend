@@ -5,10 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import fr.legrandcinema.booking.SeatEvents;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
 import tools.jackson.databind.JsonNode;
@@ -20,6 +22,8 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -30,6 +34,31 @@ class SecurityHttpIT {
     int port;
 
     @Autowired SeatEvents events;
+    @Autowired JdbcTemplate jdbc;
+    private final List<UUID> createdFilms = new ArrayList<>();
+    private final List<UUID> createdReservations = new ArrayList<>();
+
+    @AfterEach
+    void removeRecordsCreatedByThisTest() {
+        for (UUID id : createdReservations) {
+            jdbc.update("DELETE FROM reservation_seat WHERE reservation_id=?", id);
+            jdbc.update("DELETE FROM reservation WHERE id=?", id);
+        }
+        for (UUID film : createdFilms) {
+            jdbc.update(
+                    "DELETE FROM reservation_seat WHERE reservation_id IN (SELECT b.id FROM"
+                        + " reservation b JOIN screening s ON s.id=b.screening_id WHERE"
+                        + " s.film_id=?)",
+                    film);
+            jdbc.update(
+                    "DELETE FROM reservation WHERE screening_id IN (SELECT id FROM screening WHERE"
+                        + " film_id=?)",
+                    film);
+            jdbc.update("DELETE FROM screening WHERE film_id=?", film);
+            jdbc.update("DELETE FROM film WHERE id=?", film);
+        }
+    }
+
     private final ObjectMapper json = new ObjectMapper();
 
     private HttpClient client() {
@@ -168,6 +197,7 @@ class SecurityHttpIT {
         var response = write(c, "POST", "/api/admin/films", film, true);
         assertEquals(200, response.statusCode());
         String filmId = json.readTree(response.body()).get("id").asText();
+        createdFilms.add(UUID.fromString(filmId));
         var unused = write(c, "POST", "/api/admin/films", film, true);
         String unusedId = json.readTree(unused.body()).get("id").asText();
         assertEquals(
@@ -326,6 +356,7 @@ class SecurityHttpIT {
             assertEquals(
                     "event:refresh", afterCommit.get(5, java.util.concurrent.TimeUnit.SECONDS));
             JsonNode ticket = json.readTree(response.body());
+            createdReservations.add(UUID.fromString(ticket.get("id").asText()));
             var repeated = write(c, "POST", "/api/reservations", body, true);
             assertEquals(200, repeated.statusCode());
             assertEquals(

@@ -20,6 +20,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -157,7 +158,7 @@ public class BookingService {
                     }
                     UUID id = UUID.randomUUID();
                     String reference =
-                            "GC-" + id.toString().replace("-", "").substring(0, 24).toUpperCase();
+                            "GC-" + id.toString().replace("-", "").substring(0, 24).toUpperCase(Locale.ROOT);
                     jdbc.update(
                             """
                             INSERT INTO reservation(id,reference,screening_id,customer_id,actor_id,channel,total_cents,idempotency_key,request_hash)
