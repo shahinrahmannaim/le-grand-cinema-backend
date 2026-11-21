@@ -13,6 +13,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -33,22 +34,29 @@ public class StaffController {
             @RequestParam(defaultValue = "0") int page) {
         if (page < 0 || page > 100000 || reference.length() > 32)
             throw new ApiException(400, "Recherche invalide.");
-        String ref = reference.trim().toUpperCase();
-        String where =
-                " WHERE (?='' OR position(? in b.reference)>0) AND (CAST(? AS UUID) IS NULL OR"
-                        + " b.screening_id=CAST(? AS UUID))";
-        Object[] args = {ref, ref, screeningId, screeningId};
+        String ref = reference.trim().toUpperCase(Locale.ROOT);
         Long total =
-                jdbc.queryForObject("SELECT count(*) FROM reservation b" + where, Long.class, args);
+                jdbc.queryForObject(
+                        """
+                        SELECT count(*) FROM reservation b
+                        WHERE (?='' OR position(? in b.reference)>0)
+                          AND (CAST(? AS UUID) IS NULL OR b.screening_id=CAST(? AS UUID))
+                        """,
+                        Long.class,
+                        ref,
+                        ref,
+                        screeningId,
+                        screeningId);
         List<Map<String, Object>> rows =
                 jdbc.queryForList(
                         """
                         SELECT b.id,b.reference,b.status,b.channel,b.total_cents,b.created_at,s.starts_at,f.title,r.name AS room_name,
                         (SELECT count(*) FROM reservation_seat z WHERE z.reservation_id=b.id AND z.released_at IS NULL) AS seats
                         FROM reservation b JOIN screening s ON s.id=b.screening_id JOIN film f ON f.id=s.film_id JOIN room r ON r.id=s.room_id
-                        """
-                                + where
-                                + " ORDER BY b.created_at DESC,b.id LIMIT 25 OFFSET ?",
+                        WHERE (?='' OR position(? in b.reference)>0)
+                          AND (CAST(? AS UUID) IS NULL OR b.screening_id=CAST(? AS UUID))
+                        ORDER BY b.created_at DESC,b.id LIMIT 25 OFFSET ?
+                        """,
                         ref,
                         ref,
                         screeningId,

@@ -26,7 +26,7 @@ Cette adresse redirige vers http://localhost:8080/api/docs/index.html. Le contra
 4. L'initialiseur récupère un jeton CSRF frais avant chaque POST / PUT / PATCH / DELETE. La protection CSRF reste activée, y compris pour la connexion et la déconnexion. Les appels sont limités à l'API de la même origine.
 5. Pour changer de compte, appeler `POST /auth/logout`, puis se reconnecter.
 
-Les écritures de Swagger modifient réellement la base ; utiliser les données fictives de démonstration. Dans un déploiement via le proxy frontend, utiliser `/api/docs/index.html` sur cette même origine ; le cookie de l'API directe et celui du frontend appartiennent à des origines différentes. Le déploiement public reste à réaliser.
+Les écritures de Swagger modifient réellement la base ; utiliser les données fictives de démonstration. Dans un déploiement via le proxy frontend, utiliser `/api/docs/index.html` sur cette même origine ; le cookie de l'API directe et celui du frontend appartiennent à des origines différentes. Le déploiement public est distinct des tests locaux ; utiliser l’URL du déploiement concerné.
 
 ## Lire JaCoCo sur macOS
 
@@ -37,7 +37,7 @@ open target/site/jacoco/index.html
 
 Ce premier résultat ne contient que les tests unitaires. Pour la couverture des parcours PostgreSQL et HTTP, lancer la commande `-Pdatabase-tests clean verify` du README avec une base de test isolée, puis ouvrir le même rapport. `clean` efface les anciens compteurs. Le XML destiné à Sonar est `target/site/jacoco/jacoco.xml`.
 
-Les quatre tests Node de l'initialiseur Swagger se lancent avec :
+Les tests Node de l'initialiseur Swagger se lancent avec :
 
 ```bash
 node --test scripts/swagger-request.test.mjs
@@ -47,7 +47,7 @@ Ils sont distincts du pourcentage Java de JaCoCo. Les tests HTTP Java vérifient
 
 ## Activer SonarQube Cloud dans GitHub
 
-La configuration fournie ne contient ni jeton, ni clé de projet inventée. Choisir une organisation SonarQube Cloud en région Europe, importer le dépôt GitHub backend et suivre son assistant **GitHub Actions / Maven**. Utiliser l'analyse CI ; désactiver l'analyse automatique si elle est proposée / activée, afin de ne pas lancer deux méthodes d'analyse concurrentes.
+Le workflow exige un jeton et les clés exactes du projet. Choisir une organisation SonarQube Cloud en région Europe, importer le dépôt GitHub backend et suivre son assistant **GitHub Actions / Maven**. Utiliser l'analyse CI ; désactiver l'analyse automatique si elle est proposée / activée, afin de ne pas lancer deux méthodes d'analyse concurrentes.
 
 Dans le dépôt GitHub, `Settings → Secrets and variables → Actions` :
 
@@ -56,9 +56,8 @@ Dans le dépôt GitHub, `Settings → Secrets and variables → Actions` :
 | Repository secret | `SONAR_TOKEN` | Jeton autorisé à analyser ce projet, créé dans Sonar |
 | Repository variable | `SONAR_ORGANIZATION` | Clé exacte de l'organisation affichée par Sonar |
 | Repository variable | `SONAR_PROJECT_KEY` | Clé exacte du projet backend affichée par Sonar |
-| Repository variable | `SONAR_ENABLED` | `true`, une fois les trois valeurs précédentes renseignées |
 
-Ne jamais mettre le jeton dans Git, dans le PDF, dans une capture ou dans un message. Le workflow l'utilise uniquement depuis les secrets GitHub. L'activation avec des valeurs manquantes fait échouer l'étape avec un message explicite.
+Ne jamais mettre le jeton dans Git, dans le PDF, dans une capture ou dans un message. Le workflow l'utilise uniquement depuis les secrets GitHub. Sur `main` et les PR internes vers `main`, des valeurs manquantes font échouer l’étape avec un message explicite. Il n’existe plus de drapeau `SONAR_ENABLED` permettant de masquer silencieusement l’analyse.
 
 La configuration vise l'offre Free pour un dépôt public : analyse de `main` et des PR internes ciblant `main`. Les branches de fonctionnalité et les PR vers `develop` conservent les tests et Checkstyle, mais n'exécutent pas Sonar. Une autre offre serait nécessaire pour étendre les analyses selon ses conditions. Ne pas contourner cette limite en prétendant qu'une analyse de fonctionnalité est une analyse de `main`.
 
@@ -66,7 +65,7 @@ Publier et valider le projet complet dans `main` avec les vraies PR décrites da
 
 La CI génère d'abord les rapports de tests et de couverture avec PostgreSQL 17, puis lance le scanner Maven dont la version est fixée dans `pom.xml`. Elle ne reçoit aucun secret pour les PR provenant d'un fork. Les artefacts de rapports sont téléchargeables dans GitHub Actions.
 
-Après la première analyse : examiner les problèmes, traiter les vrais défauts, expliquer les éventuels faux positifs, et conserver l'URL du tableau de bord et le résultat du Quality Gate pour le dossier. Ne pas exclure du code métier simplement pour augmenter artificiellement la couverture. Aucun résultat Sonar distant n'a été obtenu dans cette préparation sans authentification.
+Après la première analyse : examiner les problèmes, traiter les vrais défauts, expliquer les éventuels faux positifs, et conserver l'URL du tableau de bord et le résultat du Quality Gate pour le dossier. Ne pas exclure du code métier simplement pour augmenter artificiellement la couverture. Une analyse distante et son Quality Gate doivent être vérifiés sur le commit livré. Un résultat local ou une ancienne capture ne prouve pas cette validation.
 
 ## Références officielles
 
