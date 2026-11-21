@@ -2,6 +2,8 @@ package fr.legrandcinema.catalog;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -9,6 +11,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import fr.legrandcinema.config.SecurityConfig;
+
+import java.sql.ResultSet;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,10 +34,19 @@ class CinemaControllerTest {
 
     @Test
     void anonymousVisitorReceivesCinemaJsonAtRoot() throws Exception {
-        when(jdbc.queryForObject(anyString(), any(RowMapper.class)))
-                .thenReturn(
-                        new CinemaController.CinemaDetails(
-                                "Le Grand Cinéma", 10, 1700, "Europe/Paris", "/api/docs/index.html"));
+        ResultSet rs = mock(ResultSet.class);
+        when(rs.getInt("room_count")).thenReturn(10);
+        when(rs.getInt("seat_capacity")).thenReturn(1700);
+
+        doAnswer(
+                invocation -> {
+                    RowMapper<CinemaController.CinemaDetails> mapper =
+                            invocation.getArgument(1);
+                    return mapper.mapRow(rs, 0);
+                })
+                .when(jdbc)
+                .queryForObject(
+                        anyString(), anyRowMapper());
 
         mvc.perform(get("/"))
                 .andExpect(status().isOk())
@@ -53,5 +66,9 @@ class CinemaControllerTest {
     @Test
     void anonymousVisitorStillCannotAccessPrivateTickets() throws Exception {
         mvc.perform(get("/api/reservations")).andExpect(status().isUnauthorized());
+    }
+
+    private static RowMapper<CinemaController.CinemaDetails> anyRowMapper() {
+        return any();
     }
 }
