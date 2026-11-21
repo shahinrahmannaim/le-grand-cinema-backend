@@ -10,6 +10,39 @@ info:
 servers:
 - url: /api
 paths:
+  /:
+    servers:
+    - url: /
+    get:
+      summary: Informations publiques du cinéma
+      description: Le nombre de salles et la capacité sont calculés depuis la base.
+      tags:
+      - public
+      security: []
+      responses:
+        '200':
+          description: Informations du Grand Cinéma
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [name, roomCount, seatCapacity, timeZone, documentation]
+                properties:
+                  name:
+                    type: string
+                    example: Le Grand Cinéma
+                  roomCount:
+                    type: integer
+                    example: 10
+                  seatCapacity:
+                    type: integer
+                    example: 1700
+                  timeZone:
+                    type: string
+                    example: Europe/Paris
+                  documentation:
+                    type: string
+                    example: /api/docs/index.html
   /catalog/films:
     get:
       summary: Films publiés ayant une séance future

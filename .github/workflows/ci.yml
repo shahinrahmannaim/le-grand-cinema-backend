@@ -1,9 +1,10 @@
 name: Backend checks
 on:
   push:
-    branches: [main, develop, 'feature/**']
+    branches: [main, develop, 'feature/**', 'fix/**', 'docs/**']
   pull_request:
     branches: [develop, main]
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
@@ -50,8 +51,8 @@ jobs:
 
       - name: SonarQube Cloud analysis and quality gate
         if: >-
-          vars.SONAR_ENABLED == 'true' &&
-          ((github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+          (((github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+          github.ref == 'refs/heads/main') ||
           (github.event_name == 'pull_request' && github.base_ref == 'main' &&
           github.event.pull_request.head.repo.full_name == github.repository))
         env:
